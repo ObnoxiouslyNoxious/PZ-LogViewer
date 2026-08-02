@@ -13,6 +13,7 @@ with open(CONFIG_PATH, "r", encoding="utf-8") as f:
 LOGS_DIR = config.get("logsDir", "")
 HOST = config.get("host", "127.0.0.1")
 PORT = config.get("port", 8080)
+VERSION = config.get("version", "1.0.0")
 START_TIME = int(time.time())
 
 
@@ -114,7 +115,7 @@ class LogHandler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"Log Viewer running at http://{HOST}:{PORT}")
+    print(f"PZ Log Viewer v{VERSION} running at http://{HOST}:{PORT}")
     print(f"Watching: {LOGS_DIR}")
     print("Use the STOP LOGGING button in the browser to shut down.")
     server = HTTPServer((HOST, PORT), LogHandler)

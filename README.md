@@ -1,5 +1,7 @@
 # PZ Log Viewer
 
+[![Latest Release](https://img.shields.io/github/v/release/ObnoxiouslyNoxious/PZ-LogViewer)](https://github.com/ObnoxiouslyNoxious/PZ-LogViewer/releases/latest)
+
 A real-time log viewer for Project Zomboid client/server logs. Displays both client and server logs side-by-side with syntax highlighting for errors, warnings, and stack traces.
 
 ## Features
@@ -9,7 +11,6 @@ A real-time log viewer for Project Zomboid client/server logs. Displays both cli
 - **Syntax highlighting** — Errors in yellow, stack traces in red
 - **Resizable panels** — Drag the divider to adjust panel widths
 - **Auto-scroll** — Automatically scrolls to bottom on new content
-- **STOP LOGGING** — Gracefully shuts down the Python server
 
 ## Requirements
 
@@ -19,11 +20,18 @@ A real-time log viewer for Project Zomboid client/server logs. Displays both cli
 
 ## Setup
 
-1, **Edit `config.json`** and set `logsDir` to your Zomboid Logs folder:
+1. **Download** — Clone or download this repository:
+   ```
+   git clone https://github.com/ObnoxiouslyNoxious/PZ-LogViewer.git
+   ```
+   Or download the ZIP from GitHub and extract it.
+
+2. **Edit `config.json`** and set `logsDir` to your Zomboid Logs folder:
 
 ```json
 {
-    "logsDir": "C:\\Users\\YourName\\Zomboid\\Logs",
+    "version": "1.0.0",
+    "logsDir": "SET_FILEPATH_HERE",
     "host": "127.0.0.1",
     "port": 8080
 }
@@ -54,7 +62,8 @@ Edit `config.json` to change settings:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `logsDir` | `CHANGE_ME` | Path to your Zomboid Logs folder |
+| `version` | `1.0.0` | Log Viewer version |
+| `logsDir` | `SET_FILEPATH_HERE` | Path to your Zomboid Logs folder |
 | `host` | `127.0.0.1` | Server bind address |
 | `port` | `8080` | Server port |
 
