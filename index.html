@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PZ Log Viewer</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { height:100%; overflow:hidden; background:#1a1a1a; color:#e0e0e0; font-family:Consolas,'Courier New',monospace; }
+
+#bar { height:40px; display:flex; align-items:center; gap:10px; padding:0 16px; background:#222; border-bottom:1px solid #333; }
+#bar h1 { font-size:14px; color:#888; margin-right:auto; }
+.btn { padding:4px 12px; border:1px solid #333; background:#1a1a1a; color:#e0e0e0; cursor:pointer; font-family:inherit; font-size:12px; border-radius:3px; }
+.btn:hover { background:#333; }
+.btn.on { background:#e94560; border-color:#e94560; }
+.dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+.dot.on { background:#4caf50; }
+.dot.off { background:#ff9800; }
+
+#wrap { display:flex; height:calc(100% - 40px); }
+
+.col { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.col + .col { border-left:1px solid #333; }
+
+.hdr { display:flex; align-items:center; justify-content:space-between; padding:5px 12px; background:#222; border-bottom:1px solid #333; flex-shrink:0; font-size:12px; }
+.hdr .t { font-weight:700; text-transform:uppercase; }
+.hdr .t.c { color:#e94560; }
+.hdr .t.s { color:#e94560; }
+.hdr .f { color:#888; font-size:10px; }
+
+.box { flex:1; overflow-y:scroll; overflow-x:auto; background:#111; }
+
+.box-inner { padding:8px 12px; font-size:12px; line-height:1.5; white-space:pre-wrap; word-break:break-all; }
+
+.box::-webkit-scrollbar { width:14px; }
+.box::-webkit-scrollbar-track { background:#1a1a1a; }
+.box::-webkit-scrollbar-thumb { background:#888; border-radius:7px; border:3px solid #1a1a1a; }
+.box::-webkit-scrollbar-thumb:hover { background:#aaa; }
+
+.e { color:#ffeb3b; }
+.s { color:#ef9a9a; }
+
+#div { width:4px; background:#333; cursor:col-resize; flex-shrink:0; }
+#div:hover { background:#e94560; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <h1>PZ Log Viewer</h1>
+  <span class="dot on" id="dot"></span>
+  <span id="rlbl" style="font-size:11px;color:#888">Auto-refresh: 0.5s</span>
+  <button class="btn on" id="ba" onclick="ta()">Auto</button>
+  <button class="btn" onclick="fl()">Refresh</button>
+  <button class="btn" id="bs" onclick="sl()" style="border-color:#e94560;color:#e94560">STOP LOGGING</button>
+</div>
+<div id="wrap">
+  <div class="col" id="cC">
+    <div class="hdr"><span class="t c">Client Log</span><span class="f" id="cf">Loading...</span><span class="f" id="ct"></span></div>
+    <div class="box" id="bc"><div class="box-inner" id="lc"></div></div>
+  </div>
+  <div id="div"></div>
+  <div class="col" id="cS">
+    <div class="hdr"><span class="t s">Server Log</span><span class="f" id="sf">Loading...</span><span class="f" id="st"></span></div>
+    <div class="box" id="bs2"><div class="box-inner" id="ls"></div></div>
+  </div>
+</div>
+<script>
+var on=true,tm=null,pC=null,pS=null;
+var RE={e:/\b(error|exception|failed|fatal)\b/i,s:/STACK\s+TRACE|call\s+nil|exception\s+thrown|lua\s+fail|^\s+at\b|^\s+so\.krka\.|^\s+zombie\.|^\s+java\.|\.java:\d+|\.lua:\d+|^\s+Lua[\s:(]|^Stack\s+Trace|^-{4,}/i,t:/^\[/};
+
+function ta(){on=!on;document.getElementById("ba").classList.toggle("on",on);document.getElementById("dot").className="dot "+(on?"on":"off");document.getElementById("rlbl").textContent=on?"Auto-refresh: 0.5s":"Auto-refresh: paused";on?go():kp();}
+function go(){kp();tm=setInterval(fl,500);}
+function kp(){if(tm){clearInterval(tm);tm=null;}}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function cx(t){if(!t)return"";var lines=t.split("\n"),out=[],stk=false;for(var i=0;i<lines.length;i++){var l=lines[i];if(RE.s.test(l))stk=true;else if(stk&&RE.t.test(l))stk=false;if(stk){out.push('<span class="s">'+esc(l)+'</span>');}else if(RE.e.test(l)){out.push('<span class="e">'+esc(l)+'</span>');}else{out.push(esc(l));}}return out.join("\n");}
+
+async function fl(){
+  try{
+    var a=await fetch("/api/log/client"),b=await fetch("/api/log/server");
+    var ac=await a.json(),bc=await b.json();
+    up("c",ac.content);up("s",bc.content);
+  }catch(e){}
+  try{
+    var r=await(await fetch("/api/logs")).json();
+    document.getElementById("cf").textContent=r.client?r.client.name:"No log found";
+    document.getElementById("ct").textContent=r.client?r.client.modified||"":"";
+    document.getElementById("sf").textContent=r.server?r.server.name:"No log found";
+    document.getElementById("st").textContent=r.server?r.server.modified||"":"";
+  }catch(e){}
+}
+
+function up(k,txt){
+  var id=k==="c"?"lc":"ls";
+  var el=document.getElementById(id);
+  var pr=k==="c"?pC:pS;
+  if(txt===pr)return;
+  var ab=el.parentElement.scrollHeight-el.parentElement.scrollTop-el.parentElement.clientHeight<30;
+  el.innerHTML=cx(txt);
+  if(ab||pr===null)el.parentElement.scrollTop=el.parentElement.scrollHeight;
+  if(k==="c")pC=txt;else pS=txt;
+}
+
+function sl(){kp();fetch("/api/stop").catch(function(){});var b=document.getElementById("bs");b.textContent="STOPPED";b.disabled=true;b.style.opacity="0.5";document.getElementById("dot").className="dot off";document.getElementById("rlbl").textContent="Logging stopped";}
+
+var dv=document.getElementById("div"),wp=document.getElementById("wrap"),lC=document.getElementById("cC"),lS=document.getElementById("cS"),dr=false;
+dv.addEventListener("mousedown",function(){dr=true;document.body.style.cursor="col-resize";});
+document.addEventListener("mousemove",function(e){if(!dr)return;var r=wp.getBoundingClientRect();var p=Math.max(20,Math.min(80,((e.clientX-r.left)/r.width)*100));lC.style.flex="none";lC.style.width=p+"%";lS.style.flex="none";lS.style.width=(100-p)+"%";});
+document.addEventListener("mouseup",function(){dr=false;document.body.style.cursor="";});
+
+fl();go();
+</script>
+</body>
+</html>
