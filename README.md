@@ -5,6 +5,8 @@
 
 A real-time log viewer for Project Zomboid client/server logs. Displays both client and server logs side-by-side with syntax highlighting for errors, warnings, and stack traces.
 
+<img width="959" height="539" alt="image" src="https://github.com/user-attachments/assets/110982bd-1a82-4efa-b085-699795d56efd" />
+
 ## Features
 
 - **Real-time updates** — Auto-refreshes every 0.5 seconds
@@ -70,6 +72,6 @@ Edit `config.json` to change settings:
 
 ## Notes
 
-- The viewer reads the most recent log files matching `*_DebugLog.txt` (client) and `*_DebugLog-server.txt` (server)
+- The PZ Log Viewer reads the most recent log files matching `*_DebugLog.txt` (client) and `*_DebugLog-server.txt` (server)
 - Logs are read from disk on each refresh. No files are modified
 - The server runs on `127.0.0.1` (localhost) by default. It is not accessible from other devices on your network or the internet. No data is transferred externally. Everything stays on your machine.
