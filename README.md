@@ -4,6 +4,8 @@
 
 A real-time log viewer for Project Zomboid client/server logs. Displays both client and server logs side-by-side with syntax highlighting for errors, warnings, and stack traces.
 
+<img width="959" height="539" alt="image" src="https://github.com/user-attachments/assets/110982bd-1a82-4efa-b085-699795d56efd" />
+
 ## Features
 
 - **Real-time updates** — Auto-refreshes every 0.5 seconds
