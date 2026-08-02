@@ -1,6 +1,7 @@
 # PZ Log Viewer
 
 [![Latest Release](https://img.shields.io/github/v/release/ObnoxiouslyNoxious/PZ-LogViewer)](https://github.com/ObnoxiouslyNoxious/PZ-LogViewer/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A real-time log viewer for Project Zomboid client/server logs. Displays both client and server logs side-by-side with syntax highlighting for errors, warnings, and stack traces.
 
