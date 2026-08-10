@@ -1,7 +1,11 @@
 # PZ Log Viewer
 
-[![Latest Release](https://img.shields.io/github/v/release/ObnoxiouslyNoxious/PZ-LogViewer)](https://github.com/ObnoxiouslyNoxious/PZ-LogViewer/releases/latest)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Game: Project Zomboid](https://images.obnox.dev/GAME_PROJECTZOMBOID)](https://steamcommunity.com/app/108600)
+[![Latest Release](https://images.obnox.dev/RELEASE_v1.0.0)](https://github.com/ObnoxiouslyNoxious/PZ-LogViewer/releases/latest)
+[![License: MIT](https://images.obnox.dev/LICENSE_MIT)](https://opensource.org/licenses/MIT)
+[![View my Steam Workshop Page](https://images.obnox.dev/WORKSHOP_VIEW)](https://steamcommunity.com/id/ObnoxiouslyNoxious/myworkshopfiles)
+[![Visit my Website](https://images.obnox.dev/WEBSITE_VISIT)](https://obnox.dev)
+[![Join My Discord](https://images.obnox.dev/DISCORD_JOIN)](https://obnox.dev/discord)
 
 A real-time log viewer for Project Zomboid client/server logs. Displays both client and server logs side-by-side with syntax highlighting for errors, warnings, and stack traces.
 
