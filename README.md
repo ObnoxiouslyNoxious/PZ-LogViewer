@@ -16,11 +16,11 @@ A real-time log viewer for Project Zomboid client/server logs. Displays both cli
 
 ## Features
 
-- **Real-time updates** — Auto-refreshes every 0.5 seconds
-- **Dual-panel view** — Client log and server log side by side
-- **Syntax highlighting** — Errors in yellow, stack traces in red
-- **Resizable panels** — Drag the divider to adjust panel widths
-- **Auto-scroll** — Automatically scrolls to bottom on new content
+- **Real-time updates**: Auto-refreshes every 0.5 seconds
+- **Dual-panel view**: Client log and server log side by side
+- **Syntax highlighting**: Errors in yellow, stack traces in red
+- **Resizable panels**: Drag the divider to adjust panel widths
+- **Auto-scroll**: Automatically scrolls to bottom on new content
 
 ## Requirements
 
@@ -30,7 +30,7 @@ A real-time log viewer for Project Zomboid client/server logs. Displays both cli
 
 ## Setup
 
-1. **Download** — Clone or download this repository:
+1. **Download**: Clone or download this repository:
    ```
    git clone https://github.com/ObnoxiouslyNoxious/PZ-LogViewer.git
    ```

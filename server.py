@@ -5,7 +5,6 @@ import time
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from datetime import datetime
 
-# Load config
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
 with open(CONFIG_PATH, "r", encoding="utf-8") as f:
     config = json.load(f)
