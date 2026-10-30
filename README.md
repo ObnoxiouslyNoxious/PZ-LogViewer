@@ -1,7 +1,7 @@
 # PZ Log Viewer
 
 [![Game: Project Zomboid](https://images.obnox.dev/GAME_PROJECTZOMBOID)](https://steamcommunity.com/app/108600)
-[![Latest Release](https://images.obnox.dev/RELEASE_v1.0.0)](https://github.com/ObnoxiouslyNoxious/PZ-LogViewer/releases/latest)
+[![Latest Release](https://images.obnox.dev/RELEASE_v1.1.0)](https://github.com/ObnoxiouslyNoxious/PZ-LogViewer/releases/latest)
 [![License: MIT](https://images.obnox.dev/LICENSE_MIT)](https://opensource.org/licenses/MIT)
 ![Python 3.X](https://images.obnox.dev/PYTHON_3.X)
 
@@ -13,6 +13,21 @@
 A real-time log viewer for Project Zomboid client/server logs. Displays both client and server logs side-by-side with syntax highlighting for errors, warnings, and stack traces.
 
 <img width="959" height="539" alt="image" src="https://github.com/user-attachments/assets/110982bd-1a82-4efa-b085-699795d56efd" />
+
+## Web Version (No Install)
+
+`docs/index.html` is a single static page that needs no Python and no server. Host it anywhere (GitHub Pages works) or open it directly.
+
+1. Click **Choose Zomboid Logs Folder** and select `Zomboid\Logs` (or your `Zomboid` folder).
+2. The newest `*_DebugLog.txt` and `*_DebugLog-server.txt` are found automatically and tailed live.
+3. On later visits the page remembers your folder. Click **Reconnect** once per browser session, or tick "Allow on every visit" in the browser prompt to skip it.
+
+**Client File...** and **Server File...** let you point a panel at a specific file instead, such as `Console.txt`. **Forget** clears the remembered location.
+
+- Live updates need a Chromium browser (Chrome, Edge, Brave, Opera). Firefox and Safari get a manual file loader without live updates.
+- Files are read locally by your browser. Nothing is uploaded and nothing is modified.
+- Only the last 2 MB of each log is loaded on open, and the newest 30,000 lines are kept on screen.
+- Only logs on the same machine (or a mounted share) can be read.
 
 ## Features
 
@@ -40,7 +55,7 @@ A real-time log viewer for Project Zomboid client/server logs. Displays both cli
 
 ```json
 {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "logsDir": "SET_FILEPATH_HERE",
     "host": "127.0.0.1",
     "port": 8080
@@ -72,7 +87,7 @@ Edit `config.json` to change settings:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `version` | `1.0.0` | Log Viewer version |
+| `version` | `1.1.0` | Log Viewer version |
 | `logsDir` | `SET_FILEPATH_HERE` | Path to your Zomboid Logs folder |
 | `host` | `127.0.0.1` | Server bind address |
 | `port` | `8080` | Server port |

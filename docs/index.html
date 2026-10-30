@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PZ Log Viewer</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { height:100%; overflow:hidden; background:#1a1a1a; color:#e0e0e0; font-family:Consolas,'Courier New',monospace; }
+body { display:flex; flex-direction:column; }
+
+#bar { min-height:40px; display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding:4px 16px; background:#222; border-bottom:1px solid #333; }
+#bar h1 { font-size:14px; color:#888; margin-right:auto; }
+.btn { padding:4px 12px; border:1px solid #333; background:#1a1a1a; color:#e0e0e0; cursor:pointer; font-family:inherit; font-size:12px; border-radius:3px; }
+.btn:hover { background:#333; }
+.btn.on { background:#e94560; border-color:#e94560; }
+.btn.pri { border-color:#e94560; color:#e94560; }
+.btn.pri:hover { background:#e94560; color:#fff; }
+.dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+.dot.on { background:#4caf50; }
+.dot.off { background:#ff9800; }
+
+#note { display:none; align-items:center; gap:10px; padding:8px 16px; background:#2a2412; border-bottom:1px solid #4a3f1a; font-size:12px; color:#ffeb3b; }
+#note.show { display:flex; }
+
+#wrap { display:flex; flex:1; min-height:0; }
+
+.col { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+.col + .col { border-left:1px solid #333; }
+
+.hdr { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:5px 12px; background:#222; border-bottom:1px solid #333; flex-shrink:0; font-size:12px; }
+.hdr .t { font-weight:700; text-transform:uppercase; color:#e94560; }
+.hdr .f { color:#888; font-size:10px; }
+.hdr .f.n { margin-right:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.box { flex:1; overflow-y:scroll; overflow-x:auto; background:#111; }
+.box-inner { padding:8px 12px; font-size:12px; line-height:1.5; white-space:pre-wrap; word-break:break-all; }
+
+.box::-webkit-scrollbar { width:14px; }
+.box::-webkit-scrollbar-track { background:#1a1a1a; }
+.box::-webkit-scrollbar-thumb { background:#888; border-radius:7px; border:3px solid #1a1a1a; }
+.box::-webkit-scrollbar-thumb:hover { background:#aaa; }
+
+.e { color:#ffeb3b; }
+.s { color:#ef9a9a; }
+
+#div { width:4px; background:#333; cursor:col-resize; flex-shrink:0; }
+#div:hover { background:#e94560; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <h1>PZ Log Viewer</h1>
+  <span class="dot off" id="dot"></span>
+  <span id="rlbl" style="font-size:11px;color:#888">No folder selected</span>
+  <button class="btn pri" id="bf" onclick="chooseDir()">Choose Zomboid Logs Folder</button>
+  <button class="btn" id="bcf" onclick="chooseFile('c')">Client File...</button>
+  <button class="btn" id="bsf" onclick="chooseFile('s')">Server File...</button>
+  <button class="btn on" id="ba" onclick="ta()">Auto</button>
+  <button class="btn" id="br" onclick="fl(true)">Refresh</button>
+  <button class="btn" id="bfg" onclick="forget()">Forget</button>
+</div>
+<div id="note"><span id="nt"></span><button class="btn pri" id="bn" style="display:none" onclick="reconnect()">Reconnect</button></div>
+<div id="wrap">
+  <div class="col" id="cC">
+    <div class="hdr"><span class="t">Client Log</span><span class="f n" id="cf">No log selected</span><span class="f" id="ct"></span></div>
+    <div class="box" id="bc"><div class="box-inner" id="lc"></div></div>
+  </div>
+  <div id="div"></div>
+  <div class="col" id="cS">
+    <div class="hdr"><span class="t">Server Log</span><span class="f n" id="sf">No log selected</span><span class="f" id="st"></span></div>
+    <div class="box" id="bs2"><div class="box-inner" id="ls"></div></div>
+  </div>
+</div>
+<input type="file" id="fic" accept=".txt,.log" style="display:none">
+<input type="file" id="fis" accept=".txt,.log" style="display:none">
+<script>
+var MAXB=2*1024*1024,MAXL=30000,SCAN=6;
+var on=true,tm=null,tk=0,busy=false,root=null,logs=null;
+var RE={e:/\b(error|exception|failed|fatal)\b/i,s:/STACK\s+TRACE|call\s+nil|exception\s+thrown|lua\s+fail|^\s+at\b|^\s+so\.krka\.|^\s+zombie\.|^\s+java\.|\.java:\d+|\.lua:\d+|^\s+Lua[\s:(]|^Stack\s+Trace|^-{4,}/i,t:/^\[/};
+var P={
+  c:{k:"c",ends:"_DebugLog.txt",fixed:null,cur:null,name:null,el:document.getElementById("lc"),box:document.getElementById("bc"),fn:document.getElementById("cf"),ft:document.getElementById("ct"),inp:document.getElementById("fic")},
+  s:{k:"s",ends:"_DebugLog-server.txt",fixed:null,cur:null,name:null,el:document.getElementById("ls"),box:document.getElementById("bs2"),fn:document.getElementById("sf"),ft:document.getElementById("st"),inp:document.getElementById("fis")}
+};
+var SUP=!!(window.showDirectoryPicker&&window.showOpenFilePicker&&window.indexedDB);
+
+function db(){return new Promise(function(res,rej){var r=indexedDB.open("pzlogviewer",1);r.onupgradeneeded=function(){r.result.createObjectStore("h");};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};});}
+async function sg(k){try{var d=await db();return await new Promise(function(res){var q=d.transaction("h").objectStore("h").get(k);q.onsuccess=function(){res(q.result||null);};q.onerror=function(){res(null);};});}catch(e){return null;}}
+async function ss(k,v){try{var d=await db();await new Promise(function(res){var tx=d.transaction("h","readwrite"),st=tx.objectStore("h");if(v)st.put(v,k);else st.delete(k);tx.oncomplete=res;tx.onerror=res;});}catch(e){}}
+
+async function perm(h,ask){
+  if(!h)return true;
+  var o={mode:"read"};
+  if(await h.queryPermission(o)==="granted")return true;
+  return ask&&await h.requestPermission(o)==="granted";
+}
+
+function note(t,btn){var n=document.getElementById("note");document.getElementById("nt").textContent=t||"";document.getElementById("bn").style.display=btn?"":"none";n.className=t?"show":"";}
+function status(t,live){document.getElementById("rlbl").textContent=t;document.getElementById("dot").className="dot "+(live?"on":"off");}
+
+function ta(){on=!on;document.getElementById("ba").classList.toggle("on",on);if(on){status("Auto-refresh: 0.5s",true);go();}else{status("Auto-refresh: paused",false);kp();}}
+function go(){kp();tm=setInterval(fl,500);}
+function kp(){if(tm){clearInterval(tm);tm=null;}}
+
+function reset(p){
+  p.el.textContent="";
+  p.off=0;p.started=false;p.skip=false;p.buf="";p.stk=false;p.lines=0;p.dec=new TextDecoder("utf-8");
+}
+
+function pad(n){return n<10?"0"+n:""+n;}
+function fmt(t){var d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds());}
+
+function append(p,text){
+  var parts=(p.buf+text).split("\n");
+  p.buf=parts.pop();
+  if(p.skip){
+    if(!parts.length){p.buf="";return;}
+    parts.shift();p.skip=false;
+  }
+  if(!parts.length)return;
+  var b=p.box,ab=!p.lines||b.scrollHeight-b.scrollTop-b.clientHeight<30;
+  var fr=document.createDocumentFragment();
+  for(var i=0;i<parts.length;i++){
+    var l=parts[i].replace(/\r$/,""),sp=document.createElement("span");
+    if(RE.s.test(l))p.stk=true;else if(p.stk&&RE.t.test(l))p.stk=false;
+    if(p.stk)sp.className="s";else if(RE.e.test(l))sp.className="e";
+    sp.textContent=l+"\n";
+    fr.appendChild(sp);
+  }
+  p.el.appendChild(fr);
+  p.lines+=parts.length;
+  while(p.lines>MAXL&&p.el.firstChild){p.el.removeChild(p.el.firstChild);p.lines--;}
+  if(ab)b.scrollTop=b.scrollHeight;
+}
+
+async function scan(p){
+  if(p.fixed)return p.fixed;
+  var best=null,bt=-1;
+  if(logs){
+    for await(var e of logs.values()){
+      if(e.kind!=="file"||!e.name.endsWith(p.ends))continue;
+      var f=await e.getFile();
+      if(f.lastModified>bt){bt=f.lastModified;best=e;}
+    }
+  }
+  if(!best&&p.k==="c"&&root){
+    try{best=await root.getFileHandle("Console.txt");}catch(x){}
+  }
+  return best;
+}
+
+async function tail(p){
+  if(!p.cur){p.fn.textContent="No log found";p.ft.textContent="";return;}
+  var f=await p.cur.getFile();
+  if(p.name!==p.cur.name||f.size<p.off){reset(p);p.name=p.cur.name;}
+  p.fn.textContent=p.cur.name;
+  p.ft.textContent=fmt(f.lastModified);
+  if(!p.started){
+    p.off=Math.max(0,f.size-MAXB);
+    p.skip=p.off>0;
+    p.started=true;
+  }
+  if(f.size<=p.off)return;
+  var buf=await f.slice(p.off,f.size).arrayBuffer();
+  p.off=f.size;
+  append(p,p.dec.decode(buf,{stream:true}));
+}
+
+async function fl(force){
+  if(!SUP||busy||(!root&&!P.c.fixed&&!P.s.fixed))return;
+  busy=true;
+  var rescan=force===true||tk++%SCAN===0;
+  for(var k in P){
+    var p=P[k];
+    try{
+      if(rescan||!p.cur)p.cur=await scan(p);
+      await tail(p);
+    }catch(e){
+      p.cur=null;
+      p.fn.textContent="Cannot read log";
+    }
+  }
+  busy=false;
+}
+
+async function setup(){
+  logs=null;
+  if(root){
+    try{logs=await root.getDirectoryHandle("Logs");}catch(e){logs=root;}
+  }
+  for(var k in P){reset(P[k]);P[k].cur=null;P[k].name=null;P[k].fn.textContent="Looking...";P[k].ft.textContent="";}
+  note("");
+  document.getElementById("ba").classList.toggle("on",on);
+  status(on?"Auto-refresh: 0.5s":"Auto-refresh: paused",on);
+  tk=0;
+  await fl(true);
+  if(on)go();
+}
+
+async function chooseDir(){
+  if(!SUP)return;
+  var h;
+  try{h=await window.showDirectoryPicker({id:"pzlogs",startIn:"desktop",mode:"read"});}catch(e){return;}
+  root=h;
+  P.c.fixed=null;P.s.fixed=null;
+  await ss("dir",h);await ss("c",null);await ss("s",null);
+  await setup();
+}
+
+async function chooseFile(k){
+  if(!SUP){P[k].inp.click();return;}
+  var h;
+  try{var r=await window.showOpenFilePicker({id:"pzlog"+k,multiple:false,types:[{description:"Log files",accept:{"text/plain":[".txt",".log"]}}]});h=r[0];}catch(e){return;}
+  P[k].fixed=h;
+  await ss(k,h);
+  await setup();
+}
+
+async function reconnect(){
+  var ok=await perm(root,true);
+  if(ok)ok=await perm(P.c.fixed,true);
+  if(ok)ok=await perm(P.s.fixed,true);
+  if(ok)await setup();
+}
+
+async function forget(){
+  kp();
+  root=null;logs=null;P.c.fixed=null;P.s.fixed=null;
+  await ss("dir",null);await ss("c",null);await ss("s",null);
+  for(var k in P){reset(P[k]);P[k].cur=null;P[k].name=null;P[k].fn.textContent="No log selected";P[k].ft.textContent="";}
+  status("No folder selected",false);
+  note("");
+}
+
+function loadStatic(p,file){
+  if(!file)return;
+  reset(p);
+  p.name=file.name;
+  p.fn.textContent=file.name;
+  p.ft.textContent=fmt(file.lastModified);
+  p.off=Math.max(0,file.size-MAXB);
+  p.skip=p.off>0;
+  file.slice(p.off,file.size).arrayBuffer().then(function(b){append(p,p.dec.decode(b)+"\n");});
+}
+
+async function init(){
+  P.c.inp.onchange=function(){loadStatic(P.c,P.c.inp.files[0]);P.c.inp.value="";};
+  P.s.inp.onchange=function(){loadStatic(P.s,P.s.inp.files[0]);P.s.inp.value="";};
+  if(!SUP){
+    document.getElementById("bf").style.display="none";
+    document.getElementById("ba").style.display="none";
+    document.getElementById("br").style.display="none";
+    document.getElementById("bfg").style.display="none";
+    document.getElementById("bcf").textContent="Load Client Log...";
+    document.getElementById("bsf").textContent="Load Server Log...";
+    document.getElementById("rlbl").textContent="Static view";
+    note("This browser cannot watch files live. Use Chrome, Edge, Brave or Opera for live updates, or load a log file manually (load it again to refresh).",false);
+    return;
+  }
+  root=await sg("dir");P.c.fixed=await sg("c");P.s.fixed=await sg("s");
+  if(!root&&!P.c.fixed&&!P.s.fixed){note("First time? In the folder dialog, paste %USERPROFILE%\\Zomboid\\Logs into the Folder field and press Enter, then Select Folder. The dialog opens there next time.",false);return;}
+  var ok=await perm(root,false)&&await perm(P.c.fixed,false)&&await perm(P.s.fixed,false);
+  if(ok){await setup();return;}
+  status("Waiting for permission",false);
+  note("Your last log location was remembered. Click Reconnect to let the browser read it again.",true);
+}
+
+var dv=document.getElementById("div"),wp=document.getElementById("wrap"),lC=document.getElementById("cC"),lS=document.getElementById("cS"),dr=false;
+dv.addEventListener("mousedown",function(){dr=true;document.body.style.cursor="col-resize";});
+document.addEventListener("mousemove",function(e){if(!dr)return;var r=wp.getBoundingClientRect();var q=Math.max(20,Math.min(80,((e.clientX-r.left)/r.width)*100));lC.style.flex="none";lC.style.width=q+"%";lS.style.flex="none";lS.style.width=(100-q)+"%";});
+document.addEventListener("mouseup",function(){dr=false;document.body.style.cursor="";});
+
+init();
+</script>
+</body>
+</html>

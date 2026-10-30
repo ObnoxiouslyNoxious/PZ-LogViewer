@@ -12,7 +12,7 @@ with open(CONFIG_PATH, "r", encoding="utf-8") as f:
 LOGS_DIR = config.get("logsDir", "")
 HOST = config.get("host", "127.0.0.1")
 PORT = config.get("port", 8080)
-VERSION = config.get("version", "1.0.0")
+VERSION = config.get("version", "1.1.0")
 START_TIME = int(time.time())
 
 
