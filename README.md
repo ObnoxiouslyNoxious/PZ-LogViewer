@@ -16,7 +16,7 @@ A real-time log viewer for Project Zomboid client/server logs. Displays both cli
 
 ## Web Version (No Install)
 
-`docs/index.html` is a single static page that needs no Python and no server. Host it anywhere (GitHub Pages works) or open it directly.
+`docs/index.html` is a single static page that needs no Python and no server. Preview: https://obnox.dev/PZ-LogViewer
 
 1. Click **Choose Zomboid Logs Folder** and select `Zomboid\Logs` (or your `Zomboid` folder).
 2. The newest `*_DebugLog.txt` and `*_DebugLog-server.txt` are found automatically and tailed live.
