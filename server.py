@@ -15,6 +15,15 @@ PORT = config.get("port", 8080)
 VERSION = config.get("version", "1.2.0")
 START_TIME = int(time.time())
 
+ASSET_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), "docs"))
+ASSET_DIRS = ("fonts", "img")
+ASSET_TYPES = {
+    ".woff2": "font/woff2",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".txt": "text/plain; charset=utf-8",
+}
+
 
 def find_newest_log(pattern):
     matches = glob.glob(os.path.join(LOGS_DIR, pattern))
@@ -46,6 +55,8 @@ class LogHandler(SimpleHTTPRequestHandler):
             self._serve_log_content("server")
         elif self.path == "/api/stop":
             self._stop_server()
+        elif len(self.path.split("?", 1)[0].split("/")) > 2 and self.path.split("?", 1)[0].split("/")[1] in ASSET_DIRS:
+            self._serve_asset(self.path.split("?", 1)[0])
         else:
             self.send_error(404)
 
@@ -60,6 +71,23 @@ class LogHandler(SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.send_header("Pragma", "no-cache")
         self.send_header("Expires", "0")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _serve_asset(self, url_path):
+        rel = url_path.lstrip("/").replace("/", os.sep)
+        full = os.path.realpath(os.path.join(ASSET_ROOT, rel))
+        ctype = ASSET_TYPES.get(os.path.splitext(full)[1].lower())
+        inside = full.startswith(ASSET_ROOT + os.sep)
+        if not ctype or not inside or not os.path.isfile(full):
+            self.send_error(404)
+            return
+        with open(full, "rb") as f:
+            body = f.read()
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "public, max-age=3600")
         self.end_headers()
         self.wfile.write(body)
 

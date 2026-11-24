@@ -2,65 +2,118 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PZ Log Viewer</title>
+<link rel="icon" href="img/obnox.png" type="image/png">
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-html,body { height:100%; overflow:hidden; background:#1a1a1a; color:#e0e0e0; font-family:Consolas,'Courier New',monospace; }
+@font-face { font-family:"Barlow Condensed"; font-style:normal; font-weight:400; font-display:swap; src:url("fonts/BarlowCondensed-400.woff2") format("woff2"); }
+@font-face { font-family:"Barlow Condensed"; font-style:normal; font-weight:500; font-display:swap; src:url("fonts/BarlowCondensed-500.woff2") format("woff2"); }
+@font-face { font-family:"Barlow Condensed"; font-style:normal; font-weight:600; font-display:swap; src:url("fonts/BarlowCondensed-600.woff2") format("woff2"); }
+@font-face { font-family:"Barlow Condensed"; font-style:normal; font-weight:700; font-display:swap; src:url("fonts/BarlowCondensed-700.woff2") format("woff2"); }
 
-#bar { height:40px; display:flex; align-items:center; gap:10px; padding:0 16px; background:#222; border-bottom:1px solid #333; }
-#bar h1 { font-size:14px; color:#888; margin-right:auto; }
-.btn { padding:4px 12px; border:1px solid #333; background:#1a1a1a; color:#e0e0e0; cursor:pointer; font-family:inherit; font-size:12px; border-radius:3px; }
-.btn:hover { background:#333; }
-.btn.on { background:#e94560; border-color:#e94560; }
+:root {
+  --bg:#0d0d0d;
+  --field:#101215;
+  --line:#2b2f36;
+  --text:#e0e0e0;
+  --muted:#9aa0a8;
+  --accent:#ffffff;
+  --bad:#ff7b72;
+  --ink-bw:14px;
+  --ink-slice:55;
+  --ink-bw-in:10px;
+  --ink-slice-in:25;
+  --mono:Consolas,'Courier New',monospace;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+[hidden] { display:none !important; }
+html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:"Barlow Condensed","Arial Narrow",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-weight:500; font-size:1.05rem; letter-spacing:0.02em; line-height:1.35; }
+body { display:flex; flex-direction:column; gap:6px; padding:8px 10px 10px; }
+
+#bar { display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; padding:0 6px; border:var(--ink-bw-in) solid transparent; border-image:url("img/InkRollInnerCharcoal.png") var(--ink-slice-in) fill / var(--ink-bw-in) stretch; text-transform:uppercase; }
+#bar h1 { margin-right:auto; white-space:nowrap; font-size:1.05rem; font-weight:700; letter-spacing:0.06em; color:var(--text); }
+.home { display:flex; line-height:0; }
+.home img { display:block; width:22px; height:22px; opacity:0.9; transition:opacity 0.15s; }
+.home:hover img { opacity:1; }
+.gh { display:flex; color:var(--muted); margin-right:-2px; }
+.gh:hover { color:var(--accent); }
+a:focus-visible, button:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+
+.btn { font:inherit; font-size:0.8rem; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--text); cursor:pointer; padding:0 0.45rem; white-space:nowrap; border:7px solid transparent; border-image:url("img/InkRollInnerBlack.png") var(--ink-slice-in) fill / 7px stretch; background:none; }
+.btn:hover { background:none; color:var(--accent); }
+.btn.on { color:#f0f7f0; border-image-source:url("img/InkRollInnerGreen.png"); }
+.btn.on:hover { color:#fff; filter:brightness(1.25); }
+.btn.pri { color:var(--accent); border-image-source:url("img/InkRollInnerGrey.png"); }
+.btn.pri:hover { filter:brightness(1.25); }
 .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
 .dot.on { background:#4caf50; }
 .dot.off { background:#ff9800; }
+#rlbl { color:var(--muted); white-space:nowrap; }
 
-#wrap { display:flex; height:calc(100% - 40px); }
+#note { display:none; align-items:center; gap:10px; padding:0 10px; border:var(--ink-bw-in) solid transparent; border-image:url("img/InkRollInnerGrey.png") var(--ink-slice-in) fill / var(--ink-bw-in) stretch; font-size:1rem; color:#ffeb3b; }
+#note.show { display:flex; }
 
-.col { flex:1; display:flex; flex-direction:column; overflow:hidden; }
-.col + .col { border-left:1px solid #333; }
+#wrap { display:flex; flex:1; min-height:0; }
 
-.hdr { display:flex; align-items:center; justify-content:space-between; padding:5px 12px; background:#222; border-bottom:1px solid #333; flex-shrink:0; font-size:12px; }
-.hdr .t { font-weight:700; text-transform:uppercase; }
-.hdr .t.c { color:#e94560; }
-.hdr .t.s { color:#e94560; }
-.hdr .f { color:#888; font-size:10px; }
+.col { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; border:var(--ink-bw) solid transparent; border-image:url("img/InkRoll.png") var(--ink-slice) fill / var(--ink-bw) stretch; padding:0 6px 4px; }
 
-.box { flex:1; overflow-y:scroll; overflow-x:auto; background:#111; }
+.hdr { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:2px 2px 6px; margin-bottom:6px; border-bottom:1px solid var(--line); flex-shrink:0; }
+.hdr .t { font-size:0.95rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent); white-space:nowrap; }
+.hdr .f { color:var(--muted); font-size:0.8rem; letter-spacing:0.04em; text-transform:uppercase; white-space:nowrap; }
+.hdr .f.n { margin-right:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
+.box { flex:1; overflow-y:scroll; overflow-x:auto; background:var(--field); border:1px solid var(--line); border-radius:4px; font-family:var(--mono); letter-spacing:0; font-weight:400; }
 .box-inner { padding:8px 12px; font-size:12px; line-height:1.5; white-space:pre-wrap; word-break:break-all; }
 
 .box::-webkit-scrollbar { width:14px; }
-.box::-webkit-scrollbar-track { background:#1a1a1a; }
-.box::-webkit-scrollbar-thumb { background:#888; border-radius:7px; border:3px solid #1a1a1a; }
-.box::-webkit-scrollbar-thumb:hover { background:#aaa; }
+.box::-webkit-scrollbar-track { background:var(--field); }
+.box::-webkit-scrollbar-thumb { background:#4a4f57; border-radius:7px; border:3px solid var(--field); }
+.box::-webkit-scrollbar-thumb:hover { background:#6b717a; }
 
 .e { color:#ffeb3b; }
-.s { color:#ef9a9a; }
+.s { color:var(--bad); }
 
-#div { width:4px; background:#333; cursor:col-resize; flex-shrink:0; }
-#div:hover { background:#e94560; }
+.arw { display:flex; align-items:center; padding:0 0.35rem; }
+.arw img { display:block; width:14px; height:14px; }
+.fl { transform:scaleX(-1); }
+.rest { display:none; }
+.col.hid { flex:0 0 60px !important; width:60px !important; min-width:60px; padding:0; border-width:10px; border-image:url("img/InkRoll.png") var(--ink-slice) fill / 10px stretch; align-items:center; }
+.col.hid > :not(.rest) { display:none; }
+.col.hid .rest { display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:6px; padding:0; background:none; border:0; color:var(--text); cursor:pointer; font:inherit; font-size:0.95rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
+.rest img { width:18px; height:18px; display:block; }
+.rest span { writing-mode:vertical-rl; }
+.rest:hover { filter:brightness(1.3); }
+#wrap.one #div { display:none; }
+.btn.stop { color:var(--bad); border-image-source:url("img/InkRollInnerRed.png"); }
+.btn.stop:hover { color:#fff; filter:brightness(1.25); }
+.btn:disabled { opacity:0.5; cursor:default; }
+#div { width:8px; background:transparent; cursor:col-resize; flex-shrink:0; }
+#div:hover { background:rgba(255,255,255,0.25); }
 </style>
 </head>
 <body>
 <div id="bar">
+  <a class="home" href="https://obnox.dev/" title="ObnoxiouslyNoxious" target="_blank" rel="noopener"><img src="img/obnox.png" alt="ObnoxiouslyNoxious" width="22" height="22"></a>
+  <a class="gh" href="https://github.com/ObnoxiouslyNoxious/PZ-LogViewer" target="_blank" rel="noopener" title="View on GitHub" aria-label="View on GitHub"><svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
   <h1>PZ Log Viewer</h1>
   <span class="dot on" id="dot"></span>
-  <span id="rlbl" style="font-size:11px;color:#888">Auto-refresh: 0.5s</span>
+  <span id="rlbl" style="font-size:0.8rem">Auto-refresh: 0.5s</span>
   <button class="btn on" id="ba" onclick="ta()">Auto</button>
   <button class="btn" onclick="fl()">Refresh</button>
-  <button class="btn" id="bs" onclick="sl()" style="border-color:#e94560;color:#e94560">STOP LOGGING</button>
+  <button class="btn stop" id="bs" onclick="sl()">STOP LOGGING</button>
 </div>
 <div id="wrap">
   <div class="col" id="cC">
-    <div class="hdr"><span class="t c">Client Log</span><span class="f" id="cf">Loading...</span><span class="f" id="ct"></span></div>
+    <div class="hdr"><span class="t">Client Log</span><span class="f n" id="cf">Loading...</span><span class="f" id="ct"></span><button class="btn arw" id="hc" title="Hide client log" aria-label="Hide client log" onclick="hide('c')"><img src="img/arrow.png" alt=""></button></div>
     <div class="box" id="bc"><div class="box-inner" id="lc"></div></div>
+    <button class="rest" onclick="show('c')" title="Show client log" aria-label="Show client log"><img class="fl" src="img/arrow.png" alt=""><span>Client Log</span></button>
   </div>
   <div id="div"></div>
   <div class="col" id="cS">
-    <div class="hdr"><span class="t s">Server Log</span><span class="f" id="sf">Loading...</span><span class="f" id="st"></span></div>
+    <div class="hdr"><button class="btn arw" id="hs" title="Hide server log" aria-label="Hide server log" onclick="hide('s')"><img class="fl" src="img/arrow.png" alt=""></button><span class="t">Server Log</span><span class="f n" id="sf">Loading...</span><span class="f" id="st"></span></div>
     <div class="box" id="bs2"><div class="box-inner" id="ls"></div></div>
+    <button class="rest" onclick="show('s')" title="Show server log" aria-label="Show server log"><img src="img/arrow.png" alt=""><span>Server Log</span></button>
   </div>
 </div>
 <script>
@@ -105,6 +158,17 @@ var dv=document.getElementById("div"),wp=document.getElementById("wrap"),lC=docu
 dv.addEventListener("mousedown",function(){dr=true;document.body.style.cursor="col-resize";});
 document.addEventListener("mousemove",function(e){if(!dr)return;var r=wp.getBoundingClientRect();var p=Math.max(20,Math.min(80,((e.clientX-r.left)/r.width)*100));lC.style.flex="none";lC.style.width=p+"%";lS.style.flex="none";lS.style.width=(100-p)+"%";});
 document.addEventListener("mouseup",function(){dr=false;document.body.style.cursor="";});
+
+var hid={c:false,s:false},BX={c:document.getElementById("bc"),s:document.getElementById("bs2")};
+function lay(){
+  lC.classList.toggle("hid",hid.c);lS.classList.toggle("hid",hid.s);wp.classList.toggle("one",hid.c||hid.s);
+  lC.style.flex="";lC.style.width="";lS.style.flex="";lS.style.width="";
+  try{localStorage.setItem("pzlvHidden",(hid.c?"c":"")+(hid.s?"s":""));}catch(e){}
+  for(var k in BX){if(!hid[k])BX[k].scrollTop=BX[k].scrollHeight;}
+}
+function hide(k){hid[k]=true;hid[k==="c"?"s":"c"]=false;lay();}
+function show(k){hid[k]=false;lay();}
+try{var sv=localStorage.getItem("pzlvHidden")||"";if(sv==="c"||sv==="s"){hid[sv]=true;lay();}}catch(e){}
 
 fl();go();
 </script>
