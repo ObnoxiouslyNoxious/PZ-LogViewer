@@ -1,7 +1,7 @@
 # PZ Log Viewer
 
 [![Game: Project Zomboid](https://images.obnox.dev/GAME_PROJECTZOMBOID)](https://steamcommunity.com/app/108600)
-[![Latest Release](https://images.obnox.dev/RELEASE_v1.1.0)](https://github.com/ObnoxiouslyNoxious/PZ-LogViewer/releases/latest)
+[![Latest Release](https://images.obnox.dev/RELEASE_v1.2.0)](https://github.com/ObnoxiouslyNoxious/PZ-LogViewer/releases/latest)
 [![License: MIT](https://images.obnox.dev/LICENSE_MIT)](https://opensource.org/licenses/MIT)
 ![Python 3.X](https://images.obnox.dev/PYTHON_3.X)
 
@@ -16,7 +16,7 @@ A real-time log viewer for Project Zomboid client/server logs. Displays both cli
 
 ## Web Version (No Install)
 
-`docs/index.html` is a single static page that needs no Python and no server. Preview: https://obnox.dev/PZ-LogViewer
+`docs/index.html` is a static page (with its `fonts/` and `img/` folders beside it) that needs no Python and no server. Preview: https://obnox.dev/PZ-LogViewer
 
 1. Click **Choose Zomboid Logs Folder** and select `Zomboid\Logs` (or your `Zomboid` folder).
 2. The newest `*_DebugLog.txt` and `*_DebugLog-server.txt` are found automatically and tailed live.
@@ -55,7 +55,7 @@ A real-time log viewer for Project Zomboid client/server logs. Displays both cli
 
 ```json
 {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "logsDir": "SET_FILEPATH_HERE",
     "host": "127.0.0.1",
     "port": 8080
@@ -87,7 +87,7 @@ Edit `config.json` to change settings:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `version` | `1.1.0` | Log Viewer version |
+| `version` | `1.2.0` | Log Viewer version |
 | `logsDir` | `SET_FILEPATH_HERE` | Path to your Zomboid Logs folder |
 | `host` | `127.0.0.1` | Server bind address |
 | `port` | `8080` | Server port |
